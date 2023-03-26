@@ -14,20 +14,24 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const dbCollection = client.db("tourApp").collection("packages");
+        const shipmentCollection = client.db("tourApp").collection("shipment");
+
         //  read data
         app.get('/packages', async(req, res)=>{
             const query = {};
             const cursor = dbCollection.find(query);
             const pack = await cursor.toArray();
             res.send(pack);
-        } )
+        } );
+
         // dynamic route create api
         app.get('/packages/:id', async(req, res)=>{
             const id = req.params.id;
             const query = { _id: new ObjectId(id)};
             const result = await dbCollection.findOne(query);
             res.send(result);
-        } )
+        } );
+
         // search api
         app.get('/search/:name', async(req, res)=>{
             let regex = new RegExp(req.params.name, "i");
@@ -36,7 +40,60 @@ async function run(){
             res.send(result);
         })
 
+        // data insert for shipment 
+        app.post('/shipment', async(req, res)=>{
+            const data = req.body;
+            const result = await shipmentCollection.insertOne(data);
+            res.send(result);
+            console.log(data);
+        });
 
+        // data load for shipment
+        app.get('/shipment', async(req,res)=>{
+            const squery = {};
+            const scursor = shipmentCollection.find(squery);
+            const shipment = await scursor.toArray();
+            res.send(shipment);
+        } );
+
+         // update user from form
+        app.put('/shipment/:id', async(req,res)=>{
+            const id = req.params.id;
+            const updatedUser = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const options = {upsert: true};
+            const updateDoc = {
+                $set:{
+                    name: updatedUser.name,
+                    email: updatedUser.email ,
+                    city: updatedUser.city ,
+                    address: updatedUser.address,
+                    phoneno: updatedUser.phoneno,
+                    date: updatedUser.date
+                },
+            };
+            const result = await shipmentCollection.updateOne(filter, updateDoc, options)
+            console.log('updating user', id);
+            res.json(result);
+        } )
+
+        // delete
+        app.delete('/shipment/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id)};
+            const result = await shipmentCollection.deleteOne(query);
+            console.log('deleting user with id', id);
+            res.json(result);
+        } );
+
+        // after delete load data
+        app.get('/shipment/:id' , async(req, res)=>{
+            const id = req.params.id;
+            const query = { _id : new ObjectId(id) };
+            const result = await shipmentCollection.findOne(query);
+            res.send(result);
+            console.log(result);
+        })
 
     }
     finally{
@@ -44,8 +101,6 @@ async function run(){
     }
 
 }
-
-
 
 app.get('/', (req, res)=>{
     res.send(" hi from tour app");
