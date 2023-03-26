@@ -64,6 +64,7 @@ async function run(){
             const options = {upsert: true};
             const updateDoc = {
                 $set:{
+                    packagecode: updatedUser.packagecode,
                     name: updatedUser.name,
                     email: updatedUser.email ,
                     city: updatedUser.city ,
